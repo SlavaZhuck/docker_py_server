@@ -12,8 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Устанавливаем Python-зависимости во временную директорию
-COPY requirements.txt .
+# СОЗДАЕМ ПОЛЬЗОВАТЕЛЯ ЗДЕСЬ ЖЕ (с тем же UID 1000)
+RUN useradd -u 1000 appuser
+
+# Устанавливаем зависимости под этим пользователем в его домашнюю папку (/home/appuser/.local)
+USER appuser
+COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 
@@ -24,21 +28,23 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# 4. Копируем установленные пакетов из builder-образа
-COPY --from=builder /root/.local /root/.local
+# Снова создаем такого же пользователя в финальном образе
+RUN useradd -u 1000 appuser
 
-# Копируем исходный код из текущей локальной папки в текущую рабочую директорию (/app)
-COPY . .
+# КОПИРУЕМ ГОТОВЫЕ БИБЛИОТЕКИ из домашней директории appuser builder-образа
+COPY --from=builder --chown=appuser:appuser /home/appuser/.local /home/appuser/.local
 
-# Обновляем PATH, чтобы были видны бинарники (например, gunicorn)
-ENV PATH=/root/.local/bin:$PATH
+# Копируем исходный код приложения
+COPY --chown=appuser:appuser . .
 
-# 5. БЕЗОПАСНОСТЬ: Создаем непривилегированного пользователя и переключаемся на него
-RUN useradd -u 1000 appuser && chown -R appuser:appuser /app
+# Добавляем путь к установленным бинарникам (gunicorn) в PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+# Переключаемся на непривилегированного пользователя
 USER appuser
 
 # Открываем порт
 EXPOSE 8000
 
-# 6. Запуск через Gunicorn (4 воркера, привязка к 0.0.0.0:8000)
+# 3. Запуск через Gunicorn (4 воркера, привязка к 0.0.0.0:8000)
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "wsgi:app"]
