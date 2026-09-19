@@ -1,1 +1,45 @@
-# docker_py_server
+# Production-Ready Flask App in Docker
+
+Современный шаблон веб-приложения на базе **Flask** и **Gunicorn**, упакованный в **Docker** с соблюдением лучших практик безопасности и оптимизации (Multi-stage builds, Non-root user).
+
+---
+
+## 🚀 Особенности проекта
+
+- **Production-ready WSGI:** Использование Gunicorn вместо встроенного сервера разработки Flask.
+- **Безопасность (Non-root):** Контейнер запускается от имени выделенного непривилегированного пользователя (`appuser`), что снижает риски при потенциальном взломе.
+- **Оптимизированный размер образа:** Многоэтапная сборка (Multi-stage build) отделяет инструменты сборки от финального легковесного образа.
+- **Эффективное логирование:** Отключена буферизация Python (`PYTHONUNBUFFERED=1`) для мгновенного вывода логов в `docker logs`.
+- **Масштабируемость:** Настроено использование нескольких воркеров Gunicorn для параллельной обработки запросов.
+
+---
+
+## 📁 Структура проекта
+
+```text
+my-flask-app/
+├── app/
+│   ├── __init__.py      # Фабрика приложений (Application Factory)
+│   └── routes.py        # Маршруты и эндпоинты
+├── Dockerfile           # Инструкция для сборки оптимизированного образа
+├── requirements.txt     # Зависимости проекта (Flask, Gunicorn)
+├── wsgi.py              # Точка входа для WSGI-сервера
+└── .dockerignore        # Исключения для контекста сборки Docker
+
+
+
+## Build
+docker build -t flask-app .
+
+## Run
+docker run --rm -p 8000:8000 --name flask-container flask-app
+
+## Check
+open http://localhost:8000/
+
+## To add env variables
+docker run --rm -p 8000:8000 -e ENVIRONMENT=production flask-app
+
+** In python code
+import os
+env = os.getenv('ENVIRONMENT', 'development')
