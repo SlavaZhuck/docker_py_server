@@ -25,3 +25,21 @@ my-flask-app/
 ├── requirements.txt     # Зависимости проекта (Flask, Gunicorn)
 ├── wsgi.py              # Точка входа для WSGI-сервера
 └── .dockerignore        # Исключения для контекста сборки Docker
+
+
+
+## Build
+docker build -t flask-app .
+
+## Run
+docker run --rm -p 8000:8000 --name flask-container flask-app
+
+## Check
+open http://localhost:8000/
+
+## To add env variables
+docker run --rm -p 8000:8000 -e ENVIRONMENT=production flask-app
+
+** In python code
+import os
+env = os.getenv('ENVIRONMENT', 'development')
