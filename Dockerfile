@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # СОЗДАЕМ ПОЛЬЗОВАТЕЛЯ ЗДЕСЬ ЖЕ (с тем же UID 1000)
-RUN useradd -u 1000 appuser
+RUN useradd -u 1000 -m appuser
 
 # Устанавливаем зависимости под этим пользователем в его домашнюю папку (/home/appuser/.local)
 USER appuser
